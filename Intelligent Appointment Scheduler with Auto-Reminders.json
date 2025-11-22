@@ -1,0 +1,235 @@
+{
+  "name": "Intelligent Appointment Scheduler with Auto-Reminders",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "loadPreviousSession": "memory"
+        }
+      },
+      "id": "003fc234-cd86-4bda-8f9f-526647c12617",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -608,
+        2272
+      ],
+      "webhookId": "6dfcab74-6c3f-4839-aac4-ce284e2b6ad6"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an intelligent appointment scheduling assistant.\n\nYour capabilities:\n1. Schedule appointments to Google Calendar by extracting date, time, and event details from natural language\n2. List upcoming appointments from the calendar\n3. Send appointment reminders via email\n4. Show monthly calendar view\n\nWhen scheduling:\n- Extract the event title, date, and time from user input\n- Use the Google Calendar Tool to create events\n- Confirm the appointment details back to the user\n- Ask if they want a reminder email\n\nWhen listing appointments:\n- Use the Google Calendar Tool to fetch upcoming events\n- Present them in a clear, organized format\n\nAlways be helpful, confirm actions, and ask for clarification if details are unclear."
+        }
+      },
+      "id": "be54525a-20fd-4216-b472-70932b7295ad",
+      "name": "Appointment Scheduler Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        160,
+        2144
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "35954978-d61e-42e8-9e1e-c05b0213b74c",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "=lofilounge118@gmail.com",
+          "mode": "id"
+        },
+        "additionalFields": {}
+      },
+      "id": "c42e7ba1-81ad-437b-b6e2-e780bd942bf1",
+      "name": "Google Calendar Tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        272,
+        2384
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "BcwPlTlttqiZ0iTG",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "calendarId",
+              "value": "lofilounge118@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "userEmail",
+              "value": "gaameravi526@gmail.com",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "4213659b-352f-4a4e-83dc-b5c3de073f78",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        2272
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        2352
+      ],
+      "id": "eaea490b-9a1a-4a28-adff-4f0c78d61220",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0bKhc7a3SZMAMIkB",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        400,
+        2320
+      ],
+      "id": "df61db3b-6f14-4758-b499-f3c18d24399b",
+      "name": "Send a message in Gmail",
+      "webhookId": "b67bcb18-a1c7-4b0e-91bd-897fca7d1cee",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ZrikeMFpeBu3dQ1O",
+          "name": "Gmail account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Appointment Scheduler Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Appointment Scheduler Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Chat Trigger",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Appointment Scheduler Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Appointment Scheduler Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "Appointment Scheduler Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Appointment Scheduler Agent": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1852a766-c185-497e-9f5f-09b876bc0563",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "659e2470109bef0b81387f5f73402cea66f483635b66b2e5e7f261442af994eb"
+  },
+  "id": "ttg50pDLdtX3bAGR",
+  "tags": []
+}
