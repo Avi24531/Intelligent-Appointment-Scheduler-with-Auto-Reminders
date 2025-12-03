@@ -1,0 +1,90 @@
+        # Folder structure: appointment-scheduler-agent/
+# All files and folders are created as per previous plan
+
+# === config.py ===
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+GOOGLE_CALENDAR_CREDENTIALS = os.getenv("GOOGLE_CALENDAR_CREDENTIALS")
+EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+
+
+# === scheduler/calendar_integration.py ===
+from googleapiclient.discovery import build
+from google.oauth2.service_account import Credentials
+from config import GOOGLE_CALENDAR_CREDENTIALS
+
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+
+def get_upcoming_events():
+    creds = Credentials.from_service_account_file(GOOGLE_CALENDAR_CREDENTIALS, scopes=SCOPES)
+    service = build('calendar', 'v3', credentials=creds)
+    events_result = service.events().list(
+        calendarId='primary',
+        maxResults=10,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
+    events = events_result.get('items', [])
+    return events
+
+
+# === scheduler/confirmation_message.py ===
+def generate_confirmation(event):
+    name = event.get('summary', 'User')
+    start_time = event['start'].get('dateTime', event['start'].get('date'))
+    return f"Hello {name}, your appointment is confirmed for {start_time}."
+
+
+# === scheduler/auto_reminder.py ===
+import smtplib
+from email.mime.text import MIMEText
+from config import EMAIL_ADDRESS, EMAIL_PASSWORD
+
+def send_email(to_email, subject, body):
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = to_email
+
+    with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        server.starttls()
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.send_message(msg)
+
+
+# === scheduler/error_handling.py ===
+def handle_error(error):
+    print(f"[ERROR] {error}")
+    # Optional: retry logic or send notification
+
+
+# === main.py ===
+from scheduler.calendar_integration import get_upcoming_events
+from scheduler.confirmation_message import generate_confirmation
+from scheduler.auto_reminder import send_email
+from scheduler.error_handling import handle_error
+
+def run_scheduler():
+    try:
+        events = get_upcoming_events()
+        for event in events:
+            message = generate_confirmation(event)
+            print(message)
+            send_email("user@example.com", "Appointment Confirmation", message)
+    except Exception as e:
+        handle_error(e)
+
+if __name__ == "__main__":
+    run_scheduler()
+
+
+# === requirements.txt ===
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+smtplib
+python-dotenv
